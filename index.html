@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark only">
+<meta name="theme-color" content="#0d0f12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<title>JJ and Chin’s Money Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm household ledger, quiet and exact.
+   IDEA: a shared pocket ledger — tabbed entry slip on top, month page below.
+   PICTURE: the working form and the month calendar themselves.
+   COLOUR and TYPE: always-dark slate, green for income, red for spending; Inter.
+   LAYOUT: one column up to 760px, phone first. */
+:root{color-scheme:dark;--bg:#0d0f12;--card:#181b20;--card2:#20242b;--line:#2b3038;--ink:#eef0f3;--mut:#98a0ac;--g:#3fd68a;--r:#ff6b6b;--acc:#8fb4ff}
+*{box-sizing:border-box;min-width:0}
+html,body{background:var(--bg)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;color:var(--ink);font:16px/1.5 Inter,"Samsung One","SamsungOne",Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+.wrap{max-width:760px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+button{touch-action:manipulation;user-select:none;-webkit-user-select:none}
+button:active{filter:brightness(1.25)}
+h1{font-size:clamp(24px,6vw,32px);line-height:1.1;margin:4px 0 4px;text-wrap:balance;font-weight:700}
+.me{color:var(--mut);font-size:14px;margin:0 0 16px;min-height:21px}
+.msg{background:#2a1d1d;border:1px solid #5a2f2f;color:#ffd2d2;border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:15px}
+.msg.info{background:#1b2230;border-color:#2f3c55;color:#d6e2ff}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.tabs{display:grid;grid-template-columns:1fr 1fr}
+.tab{min-height:58px;font-size:18px;font-weight:600;background:#121418;color:var(--mut);border:1px solid var(--line);border-bottom:0}
+.tab:first-child{border-radius:16px 0 0 0}.tab:last-child{border-radius:0 16px 0 0;border-left:0}
+.tab.on{background:var(--card)}
+.tab.on.sp{color:var(--r);box-shadow:inset 0 3px 0 var(--r)}
+.tab.on.in{color:var(--g);box-shadow:inset 0 3px 0 var(--g)}
+.form{background:var(--card);border:1px solid var(--line);border-top:0;border-radius:0 0 16px 16px;padding:16px}
+.row{display:grid;grid-template-columns:1.45fr 1fr 1fr;gap:10px}
+label{display:block;font-size:13px;color:var(--mut);margin:0 0 4px}
+input,select{width:100%;min-height:46px;font-size:16px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+#dt{font-size:17px;min-height:50px}
+.row>div{display:flex;flex-direction:column;justify-content:flex-end}
+.content{margin-top:10px}
+.add{width:100%;margin-top:14px;min-height:50px;border:0;border-radius:12px;font-weight:600;font-size:17px;background:var(--r);color:#1a0b0b}
+.add.in{background:var(--g);color:#06200f}
+.add:disabled{opacity:.5;cursor:default}
+.err{color:var(--r);font-size:14px;margin:10px 0 0;min-height:0}
+.err:empty{display:none}
+section{margin-top:26px}
+.mnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mnav h2{margin:0;font-size:22px;text-align:center;flex:1}
+.arrow{width:46px;height:46px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:20px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-top:12px}
+.seg button{min-height:40px;border:0;border-radius:9px;background:none;color:var(--mut);font-size:15px}
+.seg button.on{background:var(--card2);color:var(--ink);font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.sum{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.sum span{display:block;font-size:13px;color:var(--mut)}
+.sum b{display:block;font-size:clamp(15px,4.3vw,22px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum.g b{color:var(--g)}.sum.r b{color:var(--r)}
+h3{font-size:17px;margin:0 0 10px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+.bar{display:grid;grid-template-columns:88px 1fr auto;gap:10px;align-items:center;font-size:14px;margin:7px 0}
+.bar i{display:block;height:10px;border-radius:5px;background:var(--r)}
+.bar .t{background:var(--card2);border-radius:5px}
+.bar em{font-style:normal;white-space:nowrap;text-align:right;color:var(--mut)}
+.empty{color:var(--mut);font-size:14px;margin:4px 0}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dow{font-size:12px;color:var(--mut);text-align:center;padding-bottom:2px}
+.day{min-height:62px;border-radius:9px;background:var(--card2);border:1px solid transparent;padding:4px 3px;text-align:left;display:flex;flex-direction:column;gap:1px;font-size:11px;line-height:1.25;overflow:hidden}
+.day .n{font-size:13px;font-weight:600;color:var(--ink)}
+.day .p{color:var(--g)}.day .m{color:var(--r)}
+.day.today{border-color:var(--acc)}.day.today .n{color:var(--acc)}
+.day.sel{background:#2d3646;border-color:var(--ink)}
+.pad{background:none}
+.lhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.lhead h3{margin:0}
+.ghost{min-height:40px;padding:0 14px;border-radius:10px;background:var(--card2);border:1px solid var(--line);font-size:14px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.ent:first-of-type{border-top:0}
+.ent .c{font-weight:500;overflow-wrap:anywhere}
+.ent .a{font-weight:600;white-space:nowrap;text-align:right}
+.ent .a.g{color:var(--g)}.ent .a.r{color:var(--r)}
+.ent .d{font-size:13px;color:var(--mut)}
+.del{min-height:44px;padding:0 12px;border-radius:9px;background:none;border:1px solid var(--line);color:var(--mut);font-size:13px;justify-self:end}
+.del.arm{border-color:var(--r);color:var(--r);background:#2a1717}
+.ov{position:fixed;inset:0;background:rgba(5,6,8,.85);display:grid;place-items:center;padding:20px;z-index:9}
+.ov[hidden]{display:none}
+.dlg{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;width:min(380px,100%);text-align:center}
+.dlg h2{margin:0 0 16px;font-size:22px}
+.dlg button{display:block;width:100%;min-height:54px;margin-top:10px;border-radius:12px;border:1px solid var(--line);background:var(--card2);font-size:18px;font-weight:600}
+.dlg button:disabled{opacity:.4;cursor:default}
+.dlg small{display:block;color:var(--mut);margin-top:10px;font-size:13px}
+.link{background:none;border:0;color:var(--acc);font-size:14px;padding:6px 4px;min-height:36px}
+.logo{display:block;margin:0 auto 10px;border-radius:16px}
+.imp summary{cursor:pointer;color:var(--mut);font-size:15px;min-height:32px;list-style-position:inside}
+.imp textarea{width:100%;margin:8px 0;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px;font:14px/1.4 inherit;color:inherit;resize:vertical}
+@media(display-mode:standalone){.wrap{padding-top:calc(14px + env(safe-area-inset-top))}}
+@media(max-width:600px){
+  .row{grid-template-columns:1.35fr 1fr}.row .cat{grid-column:1/-1}
+  .cards{gap:6px}.sum{padding:10px 8px}
+  .bar{grid-template-columns:78px 1fr auto}
+  .day{min-height:56px;font-size:10px;padding:3px 2px}
+  .tab{min-height:60px}
+  .form{padding:14px 12px}
+  .add{min-height:56px;font-size:18px}
+  .box{padding:12px}
+  .ent{padding:14px 0}
+}
+/* Narrow Samsung phones (Galaxy A/S base models at large font, Z Fold cover screen) */
+@media(max-width:400px){
+  .cards{grid-template-columns:1fr 1fr}
+  .cards .sum:last-child{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline}
+  .sum b{font-size:18px}
+  .row{grid-template-columns:1.7fr 1fr;gap:8px}
+  #dt{font-size:14px;padding:8px 4px 8px 8px}
+  input,select{min-height:50px}
+  .cal{gap:3px}
+  .day{min-height:52px;padding:3px 1px;font-size:9.5px}
+  .day .n{font-size:12px}
+  .bar{grid-template-columns:72px 1fr auto;gap:8px}
+  .mnav h2{font-size:19px}
+}
+@media(prefers-reduced-motion:no-preference){.tab,.seg button,.day{transition:background .15s,color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>JJ and Chin’s Money Tracker</h1>
+  <p class="me"><span id="me"></span> <button class="link" id="out" hidden>Sign out</button></p>
+  <div id="msg" class="msg info">Connecting to your shared tracker…</div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab sp on" id="tSp" role="tab" aria-selected="true">Spending</button>
+    <button class="tab in" id="tIn" role="tab" aria-selected="false">Income</button>
+  </div>
+  <form class="form" id="form" novalidate>
+    <div class="row">
+      <div><label for="dt">Date and time</label><input id="dt" type="datetime-local"></div>
+      <div><label for="amt">Amount (₩)</label><input id="amt" type="text" inputmode="numeric" enterkeyhint="next" autocomplete="off" placeholder="₩0"></div>
+      <div class="cat"><label for="cat">Category</label><select id="cat"></select></div>
+    </div>
+    <div class="content"><label for="txt" id="txtLbl">Content</label><input id="txt" type="text" maxlength="200" enterkeyhint="done" placeholder="What was it for?" autocomplete="off"></div>
+    <button class="add" id="add" type="submit">Add entry</button>
+    <p class="err" id="err" role="alert"></p>
+  </form>
+
+  <section>
+    <div class="mnav">
+      <button class="arrow" id="prev" aria-label="Previous month">‹</button>
+      <h2 id="mlabel"></h2>
+      <button class="arrow" id="next" aria-label="Next month">›</button>
+    </div>
+    <div class="seg" id="seg">
+      <button data-f="all" class="on">Everyone</button>
+      <button data-f="Woojung">Woojung</button>
+      <button data-f="Charlene">Charlene</button>
+    </div>
+    <div class="cards">
+      <div class="sum g"><span>Income</span><b id="sIn">₩0</b></div>
+      <div class="sum r"><span>Spending</span><b id="sSp">₩0</b></div>
+      <div class="sum"><span>Net balance</span><b id="sNet">₩0</b></div>
+    </div>
+    <div class="box"><h3>Spending by category</h3><div id="bars"></div></div>
+    <div class="box"><div class="cal" id="cal"></div></div>
+    <div class="box">
+      <div class="lhead"><h3 id="lTitle">Entries</h3><button class="ghost" id="whole" hidden>Show whole month</button></div>
+      <div id="list"></div>
+    </div>
+    <details class="box imp" id="imp">
+      <summary>Bring entries from the old tracker</summary>
+      <p class="empty">In the old tracker, tap “Copy all entries”, then paste here. Importing twice won’t create duplicates.</p>
+      <textarea id="impTxt" rows="4" placeholder="Paste copied entries here"></textarea>
+      <button class="ghost" id="impBtn">Import entries</button>
+      <p class="empty" id="impMsg" role="status"></p>
+    </details>
+  </section>
+</div>
+
+<div class="ov" id="signin" hidden>
+  <div class="dlg">
+    <img src="./icons/icon-192.png" alt="" width="72" height="72" class="logo">
+    <h2>JJ and Chin’s Money Tracker</h2>
+    <button id="gbtn">Sign in with Google</button>
+    <small id="signMsg"></small>
+  </div>
+</div>
+
+<div class="ov" id="who" hidden>
+  <div class="dlg">
+    <h2>Who is using this?</h2>
+    <button data-n="Woojung">Woojung</button>
+    <button data-n="Charlene">Charlene</button>
+    <small id="whoMsg"></small>
+  </div>
+</div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>
